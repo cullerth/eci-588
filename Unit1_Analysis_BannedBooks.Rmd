@@ -1,0 +1,230 @@
+---
+title: "Unit 1 Independent Analysis: Banned Books on Project Gutenberg"
+author: "Tori Culler"
+date: "2/11/2021"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(tidytext)
+library(wordcloud2)
+library(forcats)
+library(gutenbergr)
+library(dplyr)
+library(readtext) ## https://cran.r-project.org/web/packages/readtext/vignettes/readtext_vignette.html
+library(ggplot2)
+
+banned_books <- readtext("banned_books/*") %>% 
+  rename(book = doc_id) %>%
+  na.omit() %>% 
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+
+banned_books_1 <- readtext("banned_books_1/*") %>% 
+  rename(book = doc_id) %>%
+  na.omit() %>% 
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+
+banned_books_2 <- readtext("banned_books_2/*") %>% 
+  rename(book = doc_id) %>%
+  na.omit() %>% 
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+
+banned_books_3 <- readtext("banned_books_3/*") %>% 
+  rename(book = doc_id) %>%
+  na.omit() %>% 
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+
+banned_counts <- banned_books %>%
+  filter(word != "project") %>%
+  filter(word != "gutenberg") %>%
+  filter(word != "de") %>%
+  filter(word != "tis") %>%
+  filter(word != "tm") %>%
+  filter(word != "chapter") %>%
+  count(word, sort = TRUE) 
+
+banned_frequencies <- banned_books %>%
+  filter(word != "project") %>%
+  filter(word != "gutenberg") %>%
+  filter(word != "de") %>%
+  filter(word != "tis") %>%
+  filter(word != "tm") %>%
+  filter(word != "chapter") %>%
+  count(book, word, sort = TRUE) %>%
+  group_by(book) %>%
+  mutate(proportion = n / sum(n))
+
+banned_frequencies_1 <- banned_books_1 %>%
+  filter(word != "project") %>%
+  filter(word != "gutenberg") %>%
+  filter(word != "de") %>%
+  filter(word != "tis") %>%
+  filter(word != "tm") %>%
+  filter(word != "chapter") %>%
+  count(book, word, sort = TRUE) %>%
+  group_by(book) %>%
+  mutate(proportion = n / sum(n))
+
+banned_frequencies_2 <- banned_books_2 %>%
+  filter(word != "project") %>%
+  filter(word != "gutenberg") %>%
+  filter(word != "de") %>%
+  filter(word != "tis") %>%
+  filter(word != "tm") %>%
+  filter(word != "chapter") %>%
+  count(book, word, sort = TRUE) %>%
+  group_by(book) %>%
+  mutate(proportion = n / sum(n))
+
+banned_frequencies_3 <- banned_books_3 %>%
+  filter(word != "project") %>%
+  filter(word != "gutenberg") %>%
+  filter(word != "de") %>%
+  filter(word != "tis") %>%
+  filter(word != "tm") %>%
+  filter(word != "chapter") %>%
+  count(book, word, sort = TRUE) %>%
+  group_by(book) %>%
+  mutate(proportion = n / sum(n))
+
+```
+
+## What I did
+
+* I performed a basic analysis of word counts and frequencies for the top 20 most popular books on Project Gutenberg from Anne Haight's 1978 publication: *'Banned books: informal notes on some books banned for various reasons at various times and in various places'*
+
+<center>
+![](images/anne_haight_cover.jpg)
+</center>
+
+https://catalog.lib.ncsu.edu/catalog/NCSU233622 
+
+## Purpose:
+
+To determine if there is indeed anything particularly risqué that shows up at the level of individual words in some commonly banned/challenged books.  
+
+The results were intriguing, if pretty limited
+
+
+## What are "banned books" anyway?
+
+* The term "banned" is somewhat misleading..."challenged" is more accurate. 
+* From the American Library Association: 
+
+*"A challenge is an attempt to remove or restrict materials, based upon the objections of a person or group.  A banning is the removal of those materials. Challenges do not simply involve a person expressing a point of view; rather, they are an attempt to remove material from the curriculum or library, thereby restricting the access of others.  Due to the commitment of librarians, teachers, parents, students and other concerned citizens, most challenges are unsuccessful and most materials are retained in the school curriculum or library collection."*
+
+http://www.ala.org/advocacy/bbooks/banned-books-qa
+
+## Who typically challenges books? Why?
+
+* Parents account for the most book challenges. Top reasons given for challenges include:
+  + the material was considered to be "sexually explicit"
+  + the material contained "offensive language"
+  + the material was "unsuited to any age group"
+
+http://www.ala.org/advocacy/bbooks/banned-books-qa
+
+## My dataset 
+
+* I looked at the top 20 most popular titles on Project Gutenberg mentioned in Anne Haight's 1978 pubication: *'Banned books: informal notes on some books banned for various reasons at various times and in various places'*
+* Why these books? 
+  + Most of today's banned/challenged books are not in the public domain! 
+  + I went with the top 20 most popular to keep things manageable for this learning experience --- Anne Haight's full list contains 178 books on PG.
+  
+## My dataset
+
+![](images/dataset.png){width="85%"}
+
+## Methods
+
+* Text of the books obtained by using the 'gutenbergr' and 'readtext' packages
+* Data processing -- tokenized & tidied text
+* Data analysis -- basic word counts & frequencies
+
+## Most common words
+
+```{r, eval=T, echo=F}
+wordcloud2(banned_counts,
+           color = ifelse(banned_counts[, 2] > 1330, 'black', 'gray'))
+```
+
+## Most common words
+
+```{r, eval=T, echo=F}
+banned_counts %>%
+  filter(n > 1330) %>% 
+  mutate(word = reorder(word, n)) %>% 
+  ggplot(aes(n, word)) + #
+  geom_col() +
+  labs(x = "Word Counts", y = NULL) + 
+  theme_minimal()
+```
+
+## Word frequencies by book
+
+```{r, eval=T, echo=F}
+banned_frequencies_1 %>%
+  group_by(book) %>%
+  slice_max(proportion, n = 5) %>%
+  ungroup() %>%
+  ggplot(aes(proportion, fct_reorder(word, proportion), fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book, ncol = 3, scales = "free") +
+  labs(y = NULL, x = NULL)
+```
+
+## Word frequencies by book
+
+```{r, eval=T, echo=F}
+banned_frequencies_2 %>%
+  group_by(book) %>%
+  slice_max(proportion, n = 5) %>%
+  ungroup() %>%
+  ggplot(aes(proportion, fct_reorder(word, proportion), fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book, ncol = 3, scales = "free") +
+  labs(y = NULL, x = NULL)
+```
+
+## Word frequencies by book
+
+```{r, eval=T, echo=F}
+banned_frequencies_3 %>%
+  group_by(book) %>%
+  slice_max(proportion, n = 5) %>%
+  ungroup() %>%
+  ggplot(aes(proportion, fct_reorder(word, proportion), fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book, ncol = 3, scales = "free") +
+  labs(y = NULL, x = NULL)
+```
+
+## Conclusions
+
+Normally, comparing such disparate texts as *"Uncle Tom's Cabin"*, *"The Communist Manifesto"*, and *"The Kama Sutra"* wouldn't really make sense. But in this case, wherein their uniting theme is ~commonly banned or challenged~, it is worthwhile (and just plain fun) to see if, as a whole, they live up to their hype.
+
+In the end, nothing particularly salacious showed up in this word level analysis. Just timeless themes of, well, **"time"**, in addition to **"life", "people", "love", "death",** & **"god"**. 
+
+This also holds true when looking at word frequencies by book, no real standouts. 
+
+## Limitations
+
+* A word level analysis doesn't really address the issue at hand with banned/challenged books; pro-censorship crowds would likely rebut this with something along the lines of *"It's not about individual words, but the ideas they promote"*. And it is definitely true that a word level analysis like this doesn't get at the broader notions expressed in any of these texts.
+* This analysis is of course limited only to a handful of cherry picked books in the public domain, mostly 'classics'.
+* The utility of this analysis might be better if one were to compare the text analysis of individual books against the corpora of complaints against them as filed with the Office of Intellectual Freedom 
+* It would also be very interesting to analyze the text of today's popular reading selections that are commonly challenged and see how they compare
+
+## For more on banned/challenged books: 
+
+[This episode](https://podcasts.apple.com/us/podcast/sysk-selects-how-book-banning-works/id278981407?i=1000495902542) of the *'Stuff You Should Know'* podcast gives a pretty good overview of book banning. 
+
+![](images/sysk.png)
